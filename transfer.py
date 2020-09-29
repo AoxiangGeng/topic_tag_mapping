@@ -5,6 +5,8 @@ import time
 from langconv import *
 import re
 import sys
+from collections import defaultdict
+
 ### 1 ### load vectors
 tagName = []
 tagVec = []
@@ -25,9 +27,6 @@ for i in range(0,50):
 
 print(len(tagName),len(tagVec))
 indexs = [tagName, tagVec]
-#print(len(result.keys()))
-
-#print(result.keys()[:10])
 
 '''
 with open ('vectors.txt','w') as g:
@@ -36,8 +35,6 @@ with open ('vectors.txt','w') as g:
 '''
 
 ### 2 ### load topic2tag map
-from collections import defaultdict
-
 categoryMap = defaultdict(list)
 topicMap = {}
 with open ('topicMap.csv','r') as f:
@@ -74,6 +71,13 @@ def search_vectors(user_vec, count, index):
 def Traditional2Simplified(sentence):
     sentence = Converter('zh-hans').convert(sentence)
     return sentence
+
+def tag_preprocess(tag):
+    #tag格式预处理
+    sentline = Traditional2Simplified(tag)
+    sentline = sentline.replace('\"', '').replace('#', '').replace('”', '').replace('“', '').replace('、', ',').replace(' ', ',')
+    sentline = sentline.lower()
+    return sentline
 
 ### 4 ### 少tag补全
 results = {}
@@ -114,7 +118,7 @@ with open ('tagAppendix.txt','w') as f:
 
 print('done')
 
-
+### 5 ### 获取每个主题所对应的向量
 
 
 
