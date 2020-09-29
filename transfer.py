@@ -37,7 +37,7 @@ with open ('vectors.txt','w') as g:
 ### 2 ### load topic2tag map
 categoryMap = defaultdict(list)
 topicMap = {}
-with open ('topicMap.csv','r') as f:
+with open ('./data/topic2tags.csv','r') as f:
     for line in f.readlines():
         try:
             category, topic, tags = line.strip().split('\t')
