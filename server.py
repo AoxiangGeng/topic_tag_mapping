@@ -111,7 +111,8 @@ def get_video_ids():
     try:
         #从实时的request中获取信息
         req = request.json
-        count = 5
+        tags = req.tags
+        count = req.count
         result = topicHelper.querry(req, count)
         if len(result) == 0:
             logger.warning('### 返回为空 ###')
