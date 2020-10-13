@@ -11,4 +11,4 @@ data = {'tags':tags, 'count':5}
 res = requests.post(topic_url, data=json.dumps(data),\
                               headers=headers)
 
-print(r.json())
+print(res.json())

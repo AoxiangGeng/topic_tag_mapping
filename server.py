@@ -111,9 +111,10 @@ def get_video_ids():
     try:
         #从实时的request中获取信息
         req = request.json
+        logger.info(str(req))
         tags = req.tags
         count = req.count
-        result = topicHelper.querry(req, count)
+        result = topicHelper.querry(tags, count)
         if len(result) == 0:
             logger.warning('### 返回为空 ###')
             return Response(response=json.dumps([]), status=200, mimetype="application/json")
@@ -123,7 +124,6 @@ def get_video_ids():
         #出现异常，status=300
         logger.error('### 返回异常 ###', e)
         logger.error('api:%s', e)
-        logger.error(traceback.format_exc())
         return Response(response=json.dumps([]), status=300, mimetype="application/json")
 
     #结果正常，status=200
