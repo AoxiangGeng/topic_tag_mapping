@@ -143,7 +143,10 @@ def get_video_ids():
         logger.info(str(req))
         tags = req['tags']
         count = req['count']
-        author = str(req['author'])
+        try:
+            author = str(req['author'])
+        except:
+            author = '666'
         result = topicHelper.querry(tags, count)
         result = topicHelper.result_post_process(author, result, count) #后处理
         if len(result) == 0:
