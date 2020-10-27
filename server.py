@@ -29,6 +29,7 @@ class video_topics_helper():
         self.tagName, self.tagVec = self.load_vectors()
         self.topic_index = self.load_topic_pkl()
         self.topics = self.topic_index[0]
+        self.author_topic_map = self.load_censored_authors()
         logger.info('initialization done \n')
 
     def load_vectors(self):
@@ -58,6 +59,32 @@ class video_topics_helper():
         file.close()
         return topic_index
 
+    def load_censored_authors(self):
+        #加载运营标注垂类主题的作者id
+        topic_author_map = {}
+        index = 0
+        with open ('./data/censored_authors.csv','r') as f:
+            for line in f.readlines():
+                index += 1
+                if index == 1 : continue
+                category = line.strip().split(',')[0]
+                topic = line.strip().split(',')[1]
+                authors = [item for item in line.strip().split(',')[2:] if item != '']
+                topic_author_map[topic] = authors
+        
+        author_topic_map = defaultdict(list)
+        for topic,authors in topic_author_map.items():
+            for author in authors:
+                author_topic_map[author].append(topic)
+        del topic_author_map
+        return author_topic_map
+
+    def result_post_process(self, author, result, count):
+        #对结果进行后处理，如果作者id存在于author_topic_map中，则将author_topic_map中该作者对应的主题添加在结果前列
+        appendix = self.author_topic_map.get(author,[])
+        result = appendix + result
+        return result[:count]
+
     def search_vectors(self, user_vec, count, index):
         #暴力计算返回内积结果最大的向量
         ids = index[0]
@@ -65,9 +92,10 @@ class video_topics_helper():
         products = np.inner(user_vec, vectors) #numpy求user_vec 和 item_vecs的内积
         # products_id = sorted(range(len(products)), key=lambda x:products[x], reverse=True) #返回排序后的index
         products_id = np.argsort(-products)[:count]
+        result = [ids[i] for i in products_id]
         #ind = np.argpartition(products, -count)[-count:]
         #products_id = ind[np.argsort(products[ind])]
-        logger.info('top results : ' + str(result))
+        # logger.info('top results : ' + str(result))
         return result
 
     def Traditional2Simplified(self, sentence):
@@ -83,7 +111,7 @@ class video_topics_helper():
         return sentline
 
     def querry(self, tags, count):
-        #主查询方法
+        #向量搜索
         tmpVecs = []
         tmpTags = [self.tag_preprocess(i) for i in tags]
         for tag in tmpTags:
@@ -96,9 +124,10 @@ class video_topics_helper():
         if len(tmpVecs) == 0:
             logger.warning('无匹配词向量')
             result = random.sample(self.topics, count)
+            return result
         tmpVecs = np.array(tmpVecs, dtype=np.float64)
         tmpVecs = np.sum(tmpVecs, axis=0) / len(tmpVecs)   
-        result = search_vectors(tmpVecs, count, self.topic_index)
+        result = self.search_vectors(tmpVecs, count, self.topic_index)
         return result
 
 #加载工具类
@@ -112,9 +141,11 @@ def get_video_ids():
         #从实时的request中获取信息
         req = request.json
         logger.info(str(req))
-        tags = req.tags
-        count = req.count
+        tags = req['tags']
+        count = req['count']
+        author = str(req['author'])
         result = topicHelper.querry(tags, count)
+        result = topicHelper.result_post_process(author, result, count) #后处理
         if len(result) == 0:
             logger.warning('### 返回为空 ###')
             return Response(response=json.dumps([]), status=200, mimetype="application/json")
@@ -127,7 +158,7 @@ def get_video_ids():
         return Response(response=json.dumps([]), status=300, mimetype="application/json")
 
     #结果正常，status=200
-    return Response(response=json.dumps(result.tolist()), status=200, mimetype="application/json")
+    return Response(response=json.dumps(result), status=200, mimetype="application/json")
 
 
 
@@ -135,9 +166,9 @@ if __name__ == '__main__':
     #启动FLASK服务(非高并发模式)
     #app.run(host="127.0.0.1", port=18901) #, debug=False, threaded=False)
     #启动FLASK服务--多线程模式
-    app.run(host="0.0.0.0", port=10886, debug=False, threaded=True)
+    # app.run(host="0.0.0.0", port=10986, debug=False, threaded=True)
     #启动FLASK服务--多进程模式
-    # app.run(host="127.0.0.1", port=18901, debug=False, threaded=False, processes=10)
+    app.run(host="0.0.0.0", port=10986, debug=False, threaded=False, processes=5)
 
 
 
