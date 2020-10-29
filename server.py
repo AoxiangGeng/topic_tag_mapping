@@ -13,9 +13,9 @@ import requests
 import pickle
 import logging
 
-#################
+####################
 # 视频主题预测服务 #
-#################
+####################
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(process)d - %(funcName)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
