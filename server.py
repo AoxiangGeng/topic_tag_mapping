@@ -39,7 +39,7 @@ class video_topics_helper():
         count = 0
         for i in range(0,50):
             with open ('./vectors_append/part-000%02d'%i, 'r') as f:
-                logger.info('./vectors_append/part-000%02d'%i)
+                logger.info('./vectors/part-000%02d'%i)
                 for line in f.readlines():
                     tag = line.strip().split('\t')[0]
                     vec = line.strip().split('\t')[2].split(',')
