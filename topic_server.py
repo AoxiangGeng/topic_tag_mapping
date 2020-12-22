@@ -30,6 +30,7 @@ class video_topics_helper():
         self.topic_index = self.load_topic_pkl()
         self.topics = self.topic_index[0]
         self.author_topic_map = self.load_censored_authors()
+        self.new_author_topic_map = self.load_new_topic_authors()
         logger.info('initialization done \n')
 
     def load_vectors(self):
@@ -79,10 +80,29 @@ class video_topics_helper():
         del topic_author_map
         return author_topic_map
 
+    def load_new_topic_authors(self):
+        #加载运营新增主题的对应作者id
+        new_topic_author_map = {}
+        index = 0
+        with open ('./data/new_topic_and_corresponding_authors.csv','r') as f:
+            for line in f.readlines():
+                index += 1
+                topic = line.strip().split(',')[0]
+                authors = [item for item in line.strip().split(',')[1:] if item != '']
+                new_topic_author_map[topic] = authors
+        
+        new_author_topic_map = defaultdict(list)
+        for topic,authors in new_topic_author_map.items():
+            for author in authors:
+                new_author_topic_map[author].append(topic)
+        del new_topic_author_map
+        return new_author_topic_map
+
     def result_post_process(self, author, result, count):
         #对结果进行后处理，如果作者id存在于author_topic_map中，则将author_topic_map中该作者对应的主题添加在结果前列
         appendix = self.author_topic_map.get(author,[])
-        result = appendix + result
+        appendix_new = self.new_author_topic_map.get(author,[])
+        result = appendix_new + appendix + result
         return result[:count]
 
     def search_vectors(self, user_vec, count, index):
@@ -123,6 +143,7 @@ class video_topics_helper():
         #如果所有tag都没有找到对应向量，随机返回topic
         if len(tmpVecs) == 0:
             logger.warning('无匹配词向量')
+            random.seed()
             result = random.sample(self.topics, count)
             return result
         tmpVecs = np.array(tmpVecs, dtype=np.float64)
