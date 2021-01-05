@@ -95,6 +95,7 @@ class video_topics_helper():
         for topic,authors in new_topic_author_map.items():
             for author in authors:
                 new_author_topic_map[author].append(topic)
+        print('新增主题: ', new_topic_author_map.keys())
         del new_topic_author_map
         return new_author_topic_map
 
