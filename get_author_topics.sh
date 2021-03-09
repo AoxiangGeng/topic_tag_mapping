@@ -1,5 +1,4 @@
 #!bin/bash
-#!bin/bash
 set hive.execution.engine=tez;
 
 dt=`date +"%Y%m%d" -d "1 day ago"`

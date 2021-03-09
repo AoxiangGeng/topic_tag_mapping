@@ -29,9 +29,38 @@ class video_topics_helper():
         self.tagName, self.tagVec = self.load_vectors()
         self.topic_index = self.load_topic_pkl()
         self.topics = self.topic_index[0]
-        self.author_topic_map = self.load_censored_authors()
-        self.new_author_topic_map = self.load_new_topic_authors()
+        # self.author_topic_map = self.load_censored_authors()
+        # self.new_author_topic_map = self.load_new_topic_authors()
+        self.author_topic_map = self.load_author_bind_topics()
         logger.info('initialization done \n')
+
+    def load_author_bind_topics(self):
+        #加载作者绑定的主题信息
+        author_topic_map = defaultdict(list)
+        with open ('./author_topics.txt','r') as f:
+            for line in f.readlines():
+                try:
+                    topic_id, author_id, author_name = line.strip().split('\t')
+                    topic_name = self.get_topic_name(int(topic_id))
+                    author_topic_map[str(author_id)].append(topic_name)
+                except:
+                    continue
+        print('加载作者绑定的主题信息 :', len(author_topic_map))
+        return author_topic_map
+
+    def get_topic_name(self, topic_id):
+        #根据主题id查询主题名称, 媒资接口
+        url = "http://media-search.vbbobo.com:8762/audiosearch/api/query"
+        payload = {
+            "page": 1,
+            "size": 20,
+            "app": "recommend",
+             "id": {"value": [topic_id], "condition": 1, "connection": 1 }
+        }
+        headers = {'Content-Type': 'application/json'}
+        response = requests.request("POST", url, headers=headers, data = json.dumps(payload))
+        result = json.loads(response.text)['data']['data'][0]['title']
+        return result
 
     def load_vectors(self):
         #加载所有词向量
@@ -102,8 +131,8 @@ class video_topics_helper():
     def result_post_process(self, author, result, count):
         #对结果进行后处理，如果作者id存在于author_topic_map中，则将author_topic_map中该作者对应的主题添加在结果前列
         appendix = self.author_topic_map.get(author,[])
-        appendix_new = self.new_author_topic_map.get(author,[])
-        result = appendix_new + appendix + result
+        # appendix_new = self.new_author_topic_map.get(author,[])
+        result = appendix + result
         return result[:count]
 
     def search_vectors(self, user_vec, count, index):
